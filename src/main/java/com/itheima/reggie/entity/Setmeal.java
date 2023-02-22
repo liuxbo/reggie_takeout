@@ -65,5 +65,6 @@ public class Setmeal implements Serializable {
 
 
     //是否删除
+    @TableField(exist = false)
     private Integer isDeleted;
 }

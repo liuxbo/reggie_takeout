@@ -17,14 +17,11 @@ public class SetmealDish implements Serializable {
 
     private Long id;
 
-
     //套餐id
     private Long setmealId;
 
-
     //菜品id
     private Long dishId;
-
 
     //菜品名称 （冗余字段）
     private String name;
@@ -57,5 +54,6 @@ public class SetmealDish implements Serializable {
 
 
     //是否删除
+    @TableField(exist = false)
     private Integer isDeleted;
 }
