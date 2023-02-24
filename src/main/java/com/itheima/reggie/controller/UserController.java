@@ -41,7 +41,7 @@ public class UserController {
             String code = ValidateCodeUtils.generateValidateCode(4).toString();
             log.info("验证码：{}",code);
             //调用阿里云API向用户手机发送验证码
-            SMSUtils.sendMessage("瑞吉外卖","SMS_270345500",phoneNumber,code);
+            //SMSUtils.sendMessage("瑞吉外卖","SMS_270345500",phoneNumber,code);
             //将生成的验证码保存到session中
             session.setAttribute(phoneNumber,code);
             return R.success("手机验证码短信发送成功");
