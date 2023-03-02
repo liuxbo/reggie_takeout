@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8082
 spring:
   application:
     name: reggie_take_out
@@ -19,6 +19,8 @@ spring:
         max-idle: 10
         min-idle: 1
         time-between-eviction-runs: 10s
+    database: 6
+
 mybatis-plus:
   configuration:
     #在映射实体或者属性时，将数据库中表名和字段名中的下划线去掉，按照驼峰命名法映射

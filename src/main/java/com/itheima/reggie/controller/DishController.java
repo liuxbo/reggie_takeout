@@ -14,9 +14,11 @@ import com.itheima.reggie.service.DishService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,6 +33,9 @@ public class DishController {
 
     @Autowired
     private DishFlavorService dishFlavorService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品
@@ -106,6 +111,8 @@ public class DishController {
         log.info(dishDto.toString());
         dishService.updateWithFlavor(dishDto);
 
+        String key = "dish:" + dishDto.getCategoryId() + ":1";
+        redisTemplate.delete(key);
         return R.success("修改菜品成功");
     }
 
@@ -129,12 +136,22 @@ public class DishController {
      */
     @GetMapping("/list")
     public R<List<DishDto>> list(Dish dish){
+        List<DishDto>  dishDtoList = null;
+        String key = "dish" +":" + dish.getCategoryId() + ":" +dish.getStatus();
+        //从redis中获取缓存数据
+        dishDtoList = (List<DishDto>) redisTemplate.opsForValue().get(key);
+        if(dishDtoList!=null){
+            //如果redis中存在，直接返回数据，无需再查MySQL
+            return R.success(dishDtoList);
+        }
+
+        //如果不存在，需要继续查询MySQL数据库,并缓存到redis
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(dish.getCategoryId()!=null,Dish::getCategoryId,dish.getCategoryId());
         queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
         queryWrapper.eq(Dish::getStatus,1);
         List<Dish> dishList = dishService.list(queryWrapper);
-        List<DishDto> collect = dishList.stream().map((item) -> {
+        dishDtoList = dishList.stream().map((item) -> {
             DishDto dishDto = new DishDto();
             BeanUtils.copyProperties(item, dishDto);
             Long id = item.getId();
@@ -145,7 +162,10 @@ public class DishController {
             return dishDto;
         }).collect(Collectors.toList());
 
-        return R.success(collect);
+        //将查到的数据存入redis
+        redisTemplate.opsForValue().set(key,dishDtoList,60, TimeUnit.MINUTES);
+
+        return R.success(dishDtoList);
     }
 
 }
